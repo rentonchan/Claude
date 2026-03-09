@@ -20,6 +20,11 @@
 
 ## Phase 1: B — Blueprint
 
+- [x] Set up full A.N.T. directory scaffold (`architecture/`, `tools/`, `.tmp/`)
+- [x] Create `tools/utils.py` with shared utilities (verified ✅)
+- [x] Create `architecture/sop_template.md`
+- [x] Create `requirements.txt`, `README.md`, `.gitignore`, `.env` template
+- [x] Push scaffold to GitHub (`rentonchan/Claude`)
 - [ ] Ask and receive answers to all 5 Discovery Questions
 - [ ] Define Input/Output JSON schema in `claude.md`
 - [ ] Research relevant GitHub repos / APIs

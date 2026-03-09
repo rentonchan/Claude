@@ -23,7 +23,32 @@
 
 **Errors:** None
 
-**Next Step:** Await answers to 5 Discovery Questions → define schema → approve Blueprint
+**Next Step:** Scaffold Phase 1 directory structure and supporting files
+
+---
+
+### 2026-03-10 — Session 2: Phase 1 Blueprint Scaffold
+
+**Status:** ✅ Complete
+
+**Actions Taken:**
+- Scaffolded full A.N.T. 3-layer directory structure:
+  - `architecture/` — Layer 1 SOPs (+ README + sop_template.md)
+  - `tools/` — Layer 3 engines (+ README + utils.py)
+  - `.tmp/` — Ephemeral workbench (+ README)
+- Created `claude.md` (Project Constitution), `task_plan.md`, `findings.md`, `progress.md`
+- Created `.env` template, `.gitignore`, `README.md`, `requirements.txt`
+- Built `tools/utils.py` — shared utility library (logging, env, JSON, paths)
+- Ran `utils.py` self-test: ✅ PASSED
+- Committed 11 files and pushed to `github.com/rentonchan/Claude`
+
+**Errors Encountered:**
+- `TypeError: unsupported operand type(s) for |: 'type' and 'type'` in `utils.py`
+  - **Root Cause:** `dict | list` union syntax requires Python 3.10+; system is on 3.9
+  - **Fix:** Replaced with `Union[dict, list]` from `typing` module
+  - **Self-Annealing:** Documented in error registry below
+
+**Next Step:** Await answers to 5 Discovery Questions → define JSON schema in `claude.md` → approve Blueprint
 
 ---
 
