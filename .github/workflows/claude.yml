@@ -4,6 +4,11 @@ on:
   pull_request:
   issue_comment:
 
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
 jobs:
   claude:
     runs-on: ubuntu-latest
