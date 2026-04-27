@@ -234,11 +234,8 @@ def analyse_emails(emails: list[dict]) -> dict:
         try:
             print("  Using Claude Haiku...")
             return analyse_with_claude(email_text)
-        except anthropic.BadRequestError as e:
-            if "credit balance" in str(e).lower():
-                print("  Claude: no credits — trying Gemini")
-            else:
-                raise
+        except (anthropic.BadRequestError, anthropic.AuthenticationError) as e:
+            print(f"  Claude unavailable ({type(e).__name__}) — trying Gemini")
 
     # 2. Try Gemini
     if GEMINI_KEY:
