@@ -1,0 +1,78 @@
+name: Morning Brief
+
+on:
+  schedule:
+    # 7:03am HKT daily (HKT = UTC+8, so 23:03 UTC the night before)
+    - cron: '3 23 * * *'
+  workflow_dispatch:  # allows manual trigger from GitHub UI
+
+jobs:
+  run-brief:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: 'Ali abdaal claude code youtube/requirements.txt'
+
+      - name: Install dependencies
+        run: |
+          cd "Ali abdaal claude code youtube"
+          pip install -r requirements.txt
+
+      - name: Restore Google OAuth token
+        run: |
+          mkdir -p "Ali abdaal claude code youtube/.tmp"
+          echo "${{ secrets.GOOGLE_TOKEN_B64 }}" | base64 -d > "Ali abdaal claude code youtube/.tmp/token.pickle"
+
+      - name: Run morning scripts
+        env:
+          NOTION_TOKEN:      ${{ secrets.NOTION_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY:    ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          cd "Ali abdaal claude code youtube"
+          echo "=== $(date) ==="
+          echo "[1/5] Daily Brief..."
+          python tools/daily_brief.py
+          echo "[2/5] Weekly View..."
+          python tools/update_weekly_view.py
+          echo "[3/5] News Radar..."
+          python tools/fetch_news.py
+          echo "[4/5] Email Digest..."
+          python tools/fetch_email_actions.py
+          echo "[5/5] Archive old briefs..."
+          python tools/archive_old_briefs.py
+          echo "=== Done ==="
+
+  reset-habits:
+    runs-on: ubuntu-latest
+    # Every Monday at 7:01am HKT (= 23:01 UTC Sunday)
+    if: github.event_name == 'schedule' && github.event.schedule == '1 23 * * 0'
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          cd "Ali abdaal claude code youtube"
+          pip install -r requirements.txt
+      - name: Restore Google token
+        run: |
+          mkdir -p "Ali abdaal claude code youtube/.tmp"
+          echo "${{ secrets.GOOGLE_TOKEN_B64 }}" | base64 -d > "Ali abdaal claude code youtube/.tmp/token.pickle"
+      - name: Reset weekly habits
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        run: |
+          cd "Ali abdaal claude code youtube"
+          python tools/reset_habits.py
