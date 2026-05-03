@@ -161,42 +161,166 @@ HTML = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Work Chat — Renton</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Work Chat</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-       background:#f0f2f5;height:100dvh;display:flex;flex-direction:column}
-  header{background:#1a1a2e;color:#fff;padding:14px 20px;
-         display:flex;align-items:center;gap:12px;flex-shrink:0}
-  header h1{font-size:17px;font-weight:600}
-  header p{font-size:12px;opacity:.55;margin-top:2px}
-  #chat{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
-  .msg{max-width:82%;padding:12px 15px;border-radius:14px;line-height:1.6;font-size:15px;white-space:pre-wrap}
-  .user{align-self:flex-end;background:#1a1a2e;color:#fff;border-bottom-right-radius:4px}
-  .ai{align-self:flex-start;background:#fff;color:#1a1a2e;border-bottom-left-radius:4px;
-      box-shadow:0 1px 3px rgba(0,0,0,.08)}
-  .ai .lbl{font-size:11px;color:#888;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
-  .error{background:#fff3cd;color:#856404}
-  .thinking{opacity:.45;font-style:italic}
-  .chips{padding:0 20px 10px;display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}
-  .chip{background:#fff;border:1px solid #ddd;border-radius:20px;padding:6px 14px;
-        font-size:13px;cursor:pointer;color:#444;transition:all .15s}
-  .chip:hover{border-color:#1a1a2e;color:#1a1a2e}
-  footer{background:#fff;padding:12px 16px;border-top:1px solid #e5e5e5;
-         display:flex;gap:10px;flex-shrink:0}
-  footer input{flex:1;padding:11px 16px;border:1.5px solid #ddd;border-radius:24px;
-               font-size:15px;outline:none;background:#f8f8f8}
-  footer input:focus{border-color:#1a1a2e;background:#fff}
-  footer button{background:#1a1a2e;color:#fff;border:none;border-radius:24px;
-                padding:11px 22px;font-size:15px;cursor:pointer;font-weight:500}
-  footer button:active{opacity:.85}
-  @media(max-width:600px){.msg{max-width:95%}}
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { height: 100%; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f0f2f5;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  header h1  { font-size: 17px; font-weight: 600; }
+  header p   { font-size: 12px; opacity: 0.5; margin-top: 2px; }
+
+  /* ── Chat area ── */
+  #chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .bubble-wrap { display: flex; flex-direction: column; }
+  .bubble-wrap.user { align-items: flex-end; }
+  .bubble-wrap.ai   { align-items: flex-start; }
+
+  .lbl {
+    font-size: 10px;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    padding: 0 4px;
+  }
+
+  .msg {
+    max-width: min(80%, 560px);
+    padding: 12px 16px;
+    border-radius: 18px;
+    line-height: 1.6;
+    font-size: 15px;
+    word-break: break-word;
+  }
+  .bubble-wrap.user .msg {
+    background: #1a1a2e;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .bubble-wrap.ai .msg {
+    background: #fff;
+    color: #111;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .bubble-wrap.ai .msg.error { background: #fff3cd; color: #856404; }
+  .bubble-wrap.ai .msg.thinking { background: #f5f5f5; color: #888; font-style: italic; }
+
+  /* Markdown inside AI messages */
+  .msg p   { margin-bottom: 8px; }
+  .msg p:last-child { margin-bottom: 0; }
+  .msg ul, .msg ol { padding-left: 20px; margin-bottom: 8px; }
+  .msg li  { margin-bottom: 4px; }
+  .msg strong { font-weight: 600; }
+  .msg em { font-style: italic; }
+  .msg code { background: #f0f0f0; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+
+  /* ── Suggestion chips ── */
+  .chips {
+    padding: 0 16px 12px;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    flex-shrink: 0;
+    scrollbar-width: none;
+  }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    white-space: nowrap;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    padding: 7px 15px;
+    font-size: 13px;
+    cursor: pointer;
+    color: #444;
+    flex-shrink: 0;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .chip:hover  { border-color: #1a1a2e; color: #1a1a2e; }
+  .chip:active { background: #f5f5f5; }
+
+  /* ── Footer input ── */
+  footer {
+    background: #fff;
+    border-top: 1px solid #e8e8e8;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  footer input {
+    flex: 1;
+    padding: 11px 18px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 24px;
+    font-size: 15px;
+    outline: none;
+    background: #f8f8f8;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  footer input:focus { border-color: #1a1a2e; background: #fff; }
+  footer button {
+    background: #1a1a2e;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+  }
+  footer button:hover  { opacity: 0.85; }
+  footer button:active { opacity: 0.7; }
+
+  /* ── Wide screen ── */
+  @media (min-width: 700px) {
+    #chat   { padding: 24px calc(50% - 330px); }
+    footer  { padding: 14px calc(50% - 330px); }
+    .chips  { padding: 0 calc(50% - 330px) 12px; }
+  }
 </style>
 </head>
 <body>
+
 <header>
-  <div style="font-size:24px">🏢</div>
+  <span style="font-size:24px">🏢</span>
   <div>
     <h1>Work Chat</h1>
     <p>Renton's meeting knowledge · updated daily from Notion</p>
@@ -204,54 +328,87 @@ HTML = """<!DOCTYPE html>
 </header>
 
 <div id="chat">
-  <div class="msg ai">
-    <div class="lbl">Assistant</div>Hi Renton! Ask me anything about your meetings, deals, colleagues, or action items.
+  <div class="bubble-wrap ai">
+    <div class="lbl">Assistant</div>
+    <div class="msg">Hi Renton! Ask me anything about your meetings, deals, colleagues, or action items.</div>
   </div>
 </div>
 
 <div class="chips" id="chips">
-  <div class="chip" onclick="ask(this.innerText)">What meetings did I have this week?</div>
-  <div class="chip" onclick="ask(this.innerText)">Which action items are still open?</div>
-  <div class="chip" onclick="ask(this.innerText)">Summarise meetings with Arvind</div>
-  <div class="chip" onclick="ask(this.innerText)">What deals are in progress?</div>
-  <div class="chip" onclick="ask(this.innerText)">Who have I met most recently?</div>
+  <div class="chip" onclick="ask(this.innerText)">This week's meetings</div>
+  <div class="chip" onclick="ask(this.innerText)">Open action items</div>
+  <div class="chip" onclick="ask(this.innerText)">Meetings with Arvind</div>
+  <div class="chip" onclick="ask(this.innerText)">Deals in progress</div>
+  <div class="chip" onclick="ask(this.innerText)">Most recent meetings</div>
+  <div class="chip" onclick="ask(this.innerText)">Key decisions made</div>
 </div>
 
 <footer>
-  <input id="q" placeholder="Ask about your work meetings..."
+  <input id="q" placeholder="Ask about your work meetings…" autocomplete="off"
          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}">
-  <button onclick="send()">Send</button>
+  <button onclick="send()" aria-label="Send">&#10148;</button>
 </footer>
 
 <script>
-const chat=document.getElementById('chat');
-const chips=document.getElementById('chips');
-function ask(t){document.getElementById('q').value=t;send()}
-function send(){
-  const q=document.getElementById('q');
-  const question=q.value.trim();
-  if(!question)return;
-  q.value='';
-  chips.style.display='none';
-  addMsg(question,'user');
-  const t=addMsg('Thinking…','ai thinking');
-  fetch('/ask',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({question})})
-  .then(r=>r.json()).then(d=>{
-    t.remove();
-    const m=document.createElement('div');
-    m.className='msg ai'+(d.type==='error'?' error':'');
-    m.innerHTML='<div class="lbl">'+(d.model||'Assistant')+'</div>'+
-      d.answer.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
-    chat.appendChild(m);chat.scrollTop=chat.scrollHeight;
+const chat  = document.getElementById('chat');
+const chips = document.getElementById('chips');
+
+marked.setOptions({ breaks: true, gfm: true });
+
+function ask(text) {
+  document.getElementById('q').value = text;
+  send();
+}
+
+function send() {
+  const q        = document.getElementById('q');
+  const question = q.value.trim();
+  if (!question) return;
+  q.value = '';
+  chips.style.display = 'none';
+
+  addBubble(question, 'user');
+  const thinking = addBubble('Thinking…', 'ai', 'thinking');
+
+  fetch('/ask', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ question }),
+  })
+  .then(r => r.json())
+  .then(d => {
+    thinking.remove();
+    const wrap = document.createElement('div');
+    wrap.className = 'bubble-wrap ai';
+    const lbl = document.createElement('div');
+    lbl.className = 'lbl';
+    lbl.textContent = d.model || 'Assistant';
+    const msg = document.createElement('div');
+    msg.className = 'msg' + (d.type === 'error' ? ' error' : '');
+    msg.innerHTML = marked.parse(d.answer || '');
+    wrap.appendChild(lbl);
+    wrap.appendChild(msg);
+    chat.appendChild(wrap);
+    chat.scrollTop = chat.scrollHeight;
   });
 }
-function addMsg(text,cls){
-  const m=document.createElement('div');
-  m.className='msg '+cls;
-  m.textContent=text;
-  chat.appendChild(m);chat.scrollTop=chat.scrollHeight;
-  return m;
+
+function addBubble(text, side, extraClass) {
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble-wrap ' + side;
+  if (side === 'ai') {
+    const lbl = document.createElement('div');
+    lbl.className = 'lbl';
+    lbl.textContent = 'Assistant';
+    wrap.appendChild(lbl);
+  }
+  const msg = document.createElement('div');
+  msg.className = 'msg' + (extraClass ? ' ' + extraClass : '');
+  msg.textContent = text;
+  wrap.appendChild(msg);
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
+  return wrap;
 }
 </script>
 </body>
