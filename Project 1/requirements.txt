@@ -1,0 +1,32 @@
+# requirements.txt — Python Dependencies
+# B.L.A.S.T. Framework Base Dependencies
+
+# Environment variable management
+python-dotenv>=1.0.0
+
+# HTTP requests (for API integrations)
+requests>=2.31.0
+
+# ── Added during Link phase ──
+# Uncomment/add service-specific packages below as needed
+
+# --- Google Sheets ---
+# google-api-python-client>=2.100.0
+# google-auth-httplib2>=0.1.1
+# google-auth-oauthlib>=1.1.0
+
+# --- Slack ---
+# slack-sdk>=3.26.0
+
+# --- Notion ---
+# notion-client>=2.2.1
+
+# --- Data processing ---
+# pandas>=2.1.0
+
+# --- Scheduling ---
+# schedule>=1.2.1
+
+# --- Web scraping ---
+# beautifulsoup4>=4.12.2
+# playwright>=1.40.0

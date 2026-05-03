@@ -2,7 +2,7 @@
 # Renton's Morning Automation — runs daily at 7:03am HKT via crontab
 # Logs to logs/ directory
 
-DIR="/Users/rentonchan/Documents/Claude/Ali abdaal claude code youtube"
+DIR="/Users/rentonchan/Documents/Claude/Notion Improvement Project"
 PYTHON="$DIR/.venv/bin/python"
 LOG="$DIR/logs"
 DATE=$(date '+%Y-%m-%d %H:%M HKT')

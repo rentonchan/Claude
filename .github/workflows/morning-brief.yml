@@ -17,20 +17,20 @@ jobs:
         with:
           python-version: '3.11'
           cache: pip
-          cache-dependency-path: 'Ali abdaal claude code youtube/requirements.txt'
+          cache-dependency-path: 'Notion Improvement Project/requirements.txt'
 
       - name: Install dependencies
-        working-directory: 'Ali abdaal claude code youtube'
+        working-directory: 'Notion Improvement Project'
         run: pip install -r requirements.txt
 
       - name: Restore Google OAuth token
-        working-directory: 'Ali abdaal claude code youtube'
+        working-directory: 'Notion Improvement Project'
         env:
           GOOGLE_TOKEN_B64: ${{ secrets.GOOGLE_TOKEN_B64 }}
         run: python tools/restore_token.py
 
       - name: Run morning scripts
-        working-directory: 'Ali abdaal claude code youtube'
+        working-directory: 'Notion Improvement Project'
         env:
           NOTION_TOKEN:      ${{ secrets.NOTION_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -57,17 +57,17 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        working-directory: 'Ali abdaal claude code youtube'
+        working-directory: 'Notion Improvement Project'
         run: pip install -r requirements.txt
 
       - name: Restore Google OAuth token
-        working-directory: 'Ali abdaal claude code youtube'
+        working-directory: 'Notion Improvement Project'
         env:
           GOOGLE_TOKEN_B64: ${{ secrets.GOOGLE_TOKEN_B64 }}
         run: python tools/restore_token.py
 
       - name: Reset weekly habits
-        working-directory: 'Ali abdaal claude code youtube'
+        working-directory: 'Notion Improvement Project'
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
         run: python tools/reset_habits.py
