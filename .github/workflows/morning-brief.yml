@@ -37,11 +37,12 @@ jobs:
           GEMINI_API_KEY:    ${{ secrets.GEMINI_API_KEY }}
         run: |
           echo "=== $(date) ==="
-          echo "[1/5] Daily Brief..."     && python tools/daily_brief.py
-          echo "[2/5] Weekly View..."     && python tools/update_weekly_view.py
-          echo "[3/5] News Radar..."      && python tools/fetch_news.py
-          echo "[4/5] Email Digest..."    && python tools/fetch_email_actions.py
-          echo "[5/5] Archive briefs..."  && python tools/archive_old_briefs.py
+          echo "[1/6] Daily Brief..."          && python tools/daily_brief.py
+          echo "[2/6] Weekly View..."          && python tools/update_weekly_view.py
+          echo "[3/6] News Radar..."           && python tools/fetch_news.py
+          echo "[4/6] Email Digest..."         && python tools/fetch_email_actions.py
+          echo "[5/6] Meeting Knowledge..."    && python tools/sync_meeting_knowledge.py
+          echo "[6/6] Archive briefs..."       && python tools/archive_old_briefs.py
           echo "=== Done ==="
 
   reset-habits:

@@ -21,7 +21,10 @@ echo "[3/4] News Radar..." >> "$LOG/morning.log"
 echo "[4/4] Email Digest..." >> "$LOG/morning.log"
 "$PYTHON" "$DIR/tools/fetch_email_actions.py" >> "$LOG/morning.log" 2>&1
 
-echo "[5/5] Archive old briefs..." >> "$LOG/morning.log"
+echo "[5/6] Meeting Knowledge Sync..." >> "$LOG/morning.log"
+"$PYTHON" "$DIR/tools/sync_meeting_knowledge.py" >> "$LOG/morning.log" 2>&1
+
+echo "[6/6] Archive old briefs..." >> "$LOG/morning.log"
 "$PYTHON" "$DIR/tools/archive_old_briefs.py" >> "$LOG/morning.log" 2>&1
 
 echo "===== Done =====" >> "$LOG/morning.log"
