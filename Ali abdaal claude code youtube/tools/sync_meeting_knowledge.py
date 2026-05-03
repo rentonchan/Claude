@@ -23,18 +23,67 @@ NOTES_FILE    = os.path.join(KNOWLEDGE_DIR, "meeting_notes.md")
 FILE_ID_PATH  = os.path.join(KNOWLEDGE_DIR, ".file_id")
 
 
-def get_transcription_title(notion: NotionClient, page_id: str) -> str:
-    """Read the AI-generated title from the transcription block."""
+def rich_to_text(rich: list) -> str:
+    return "".join(t.get("plain_text", "") for t in rich).strip()
+
+
+def get_meeting_content(notion: NotionClient, page_id: str) -> tuple[str, str]:
+    """
+    Returns (title, structured_notes) by diving into the transcription block.
+    The transcription block has children:
+      - first paragraph child  → structured notes (headings + bullets + action items)
+      - second paragraph child → raw transcript (verbose, skipped)
+    """
+    title   = ""
+    content = []
     try:
-        blocks = notion.blocks.children.list(block_id=page_id, page_size=5)
-        for block in blocks.get("results", []):
-            if block.get("type") == "transcription":
-                rich = block.get("transcription", {}).get("title", [])
-                parts = [t.get("plain_text", "") for t in rich if t.get("plain_text", "").strip()]
-                return " ".join(parts).strip()
-    except Exception:
+        top = notion.blocks.children.list(block_id=page_id, page_size=5)
+        for block in top.get("results", []):
+            if block.get("type") != "transcription":
+                continue
+
+            # Extract title
+            rich  = block.get("transcription", {}).get("title", [])
+            title = " ".join(t.get("plain_text", "") for t in rich if t.get("plain_text", "").strip()).strip()
+
+            if not block.get("has_children"):
+                break
+
+            # Get transcription's children (paragraphs wrapping content)
+            children = notion.blocks.children.list(block_id=block["id"], page_size=10)
+            for child in children.get("results", []):
+                if not child.get("has_children"):
+                    continue
+
+                # Go one level deeper
+                grandchildren = notion.blocks.children.list(block_id=child["id"], page_size=100)
+                blocks_list   = grandchildren.get("results", [])
+
+                # Detect if this is structured notes (contains heading_3) vs raw transcript (all paragraphs)
+                has_headings = any(b.get("type") == "heading_3" for b in blocks_list)
+                if not has_headings:
+                    continue  # skip raw transcript
+
+                for b in blocks_list:
+                    btype = b.get("type")
+                    btext = rich_to_text(b.get(btype, {}).get("rich_text", []))
+
+                    if btype == "heading_3" and btext:
+                        content.append(f"\n**{btext}**")
+                    elif btype == "bulleted_list_item" and btext:
+                        content.append(f"- {btext}")
+                    elif btype == "to_do" and btext:
+                        done   = b.get("to_do", {}).get("checked", False)
+                        prefix = "- [x]" if done else "- [ ]"
+                        content.append(f"{prefix} {btext}")
+                    elif btype == "paragraph" and btext:
+                        content.append(btext)
+            break  # only process first transcription block
+
+    except Exception as e:
         pass
-    return ""
+
+    return title, "\n".join(content)
 
 
 def fetch_all_meetings(notion: NotionClient) -> list[dict]:
@@ -75,13 +124,13 @@ def build_markdown(meetings: list[dict], notion: NotionClient, updated_at: str) 
     for page in meetings:
         props = page["properties"]
 
-        # Get title — prefer transcription title over raw timestamp title
         raw_title = "".join([t.get("plain_text", "") for t in props.get("Title", {}).get("title", [])])
         if raw_title.startswith("📋 TEMPLATE"):
             skipped += 1
             continue
 
-        trans_title = get_transcription_title(notion, page["id"])
+        # Fetch full content (title + structured notes)
+        trans_title, notes_content = get_meeting_content(notion, page["id"])
         display_title = trans_title or raw_title
 
         # Metadata
@@ -100,6 +149,8 @@ def build_markdown(meetings: list[dict], notion: NotionClient, updated_at: str) 
         lines.append("  ".join(meta_parts))
         if summary:
             lines.append(f"**Summary:** {summary}")
+        if notes_content:
+            lines.append(notes_content)
         lines.append("")
 
     lines.append("---")
