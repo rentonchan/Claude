@@ -20,11 +20,13 @@ ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY")
 GEMINI_KEY    = os.environ.get("GEMINI_API_KEY")
 MEETING_DB_ID = "34d7181b-0f40-8191-8e63-e880c90e8556"
 PORT          = int(os.environ.get("PORT", 5001))
+NOTES_FILE    = os.path.join(os.path.dirname(__file__), "knowledge", "meeting_notes.md")
 
 SYSTEM_PROMPT = """You are Renton Chan's personal work assistant based in Hong Kong.
 You have full access to his meeting notes from his enterprise IT sales role.
-Answer questions about his meetings, colleagues, deals, action items, and work context.
-Be concise and specific. Reference meeting dates and people when relevant."""
+Answer questions thoroughly and in detail — include all relevant action items,
+discussion points, decisions, and context from the notes.
+Reference meeting dates and people when relevant. Do not truncate your answers."""
 
 app = Flask(__name__)
 
@@ -102,14 +104,20 @@ def fetch_notes_from_notion() -> str:
 
 
 def get_notes() -> str:
-    """Return cached notes, refresh if older than 6 hours."""
+    """Return full meeting notes. Reads from file (rich content), falls back to Notion."""
     if not _cache["notes"] or time.time() - _cache["updated"] > 21600:
-        print("Refreshing meeting notes from Notion...")
-        notes = fetch_notes_from_notion()
+        # Prefer the pre-built file which has full transcript content
+        if os.path.exists(NOTES_FILE):
+            with open(NOTES_FILE, encoding="utf-8") as f:
+                notes = f.read()
+            print(f"  Loaded from file: {len(notes):,} chars")
+        else:
+            print("  File not found, fetching from Notion...")
+            notes = fetch_notes_from_notion()
+
         if notes:
             _cache["notes"]   = notes
             _cache["updated"] = time.time()
-            print(f"  Loaded {len(notes):,} chars of meeting notes")
     return _cache["notes"]
 
 
@@ -126,9 +134,14 @@ def ask_claude(question: str, notes: str) -> str:
 
 def ask_gemini(question: str, notes: str) -> str:
     from google import genai
+    from google.genai import types
     client   = genai.Client(api_key=GEMINI_KEY)
     prompt   = f"{SYSTEM_PROMPT}\n\nMeeting notes:\n{notes}\n\nQuestion: {question}"
-    response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt,
+        config=types.GenerateContentConfig(max_output_tokens=4000),
+    )
     return response.text
 
 
