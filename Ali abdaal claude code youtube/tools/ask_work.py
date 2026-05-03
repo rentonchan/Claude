@@ -68,7 +68,7 @@ def ask_gemini(question: str, notes: str) -> str:
     from google import genai
     client   = genai.Client(api_key=GEMINI_KEY)
     prompt   = f"{SYSTEM_PROMPT}\n\nMeeting notes:\n{notes}\n\n---\n\nQuestion: {question}"
-    response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+    response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
     return response.text
 
 

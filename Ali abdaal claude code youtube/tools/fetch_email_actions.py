@@ -189,7 +189,7 @@ def analyse_with_gemini(email_text: str) -> dict:
     client   = genai.Client(api_key=GEMINI_KEY)
     prompt   = ANALYSIS_PROMPT.format(email_text=email_text)
     response = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash",
         contents=prompt,
     )
     return parse_json_result(response.text)
